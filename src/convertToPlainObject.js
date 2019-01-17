@@ -12,11 +12,36 @@ function convertToPlainObject(foovarValue, options) {
     return convertToPlainObjectFromCss(foovarValue);
   case 'type':
     return convertToPlainObjectFromType(foovarValue);
+  case 'tree':
+    return convertToPlainObjectFromTree(foovarValue);
   }
 }
 
 function isNoRecursiveValue(v) {
   return v == null || typeof v === 'string' || typeof v === 'boolean' || typeof v === 'number';
+}
+
+function convertToPlainObjectFromTree(foovarValue) {
+  var { css, type } = foovarValue;
+  var value = foovarValue;
+  if (foovarValue.__is_foovarValue) {
+    value = foovarValue();
+  }
+  if (isNoRecursiveValue(value)) {
+    return { value, css, type };
+  } else if (Array.isArray(value)) {
+    return { value: value.map(convertToPlainObjectFromValue), css, type };
+  } else {
+    return {
+      value: Object.keys(value)
+      .reduce((acc, k) => {
+        acc[k] = convertToPlainObjectFromTree(value[k]);
+        return acc;
+      }, {}),
+      css,
+      type
+    };
+  }
 }
 
 function convertToPlainObjectFromValue(foovarValue) {
